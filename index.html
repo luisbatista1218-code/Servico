@@ -300,6 +300,11 @@ async function fetchSupabase(endpoint, options = {}) {
     'Content-Type': 'application/json'
   };
   
+  const adminSenha = localStorage.getItem('admin_senha');
+  if (adminSenha) {
+    headers['X-Admin-Password'] = adminSenha;
+  }//admin
+  
   if (options.method === 'POST' || options.method === 'PATCH') {
     headers['Prefer'] = 'return=representation';
   }
@@ -1282,7 +1287,9 @@ async function entrarAdmin() {
   //  const codigoCorreto = configs.codigo_admin || '123456';
     const dados = await fetchSupabase('dono1?select=codigo_admin');
     const codigoCorreto = dados[0]?.codigo_admin;
-    
+    localStorage.setItem('admin_senha', codigo);
+
+
     if (codigo === codigoCorreto) {
       criarSessaoAdmin(manterConectado);
       fecharLoginAdmin();
