@@ -621,13 +621,30 @@ async function carregarServicosCliente() {
     let html = '';
     servicos.forEach(servico => {
 html += `
-  <div style="background: white; border-left: 5px solid #3b82f6; border-radius: 16px; padding: 22px; margin-bottom: 18px; box-shadow: 0 8px 20px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-    <div><strong style="color: #334155; font-size: 15px; letter-spacing: 0.3px; display: block; margin-bottom: 6px;">💈 Serviço</strong><span style="font-size: 17px; font-weight: 500; color: #0f172a;">${servico.nome}</span></div>
-    <div><strong style="color: #334155; font-size: 15px; letter-spacing: 0.3px; display: block; margin-bottom: 6px;">💰 Preço</strong><span style="font-size: 17px; font-weight: 500; color: #10b981;">R$ ${servico.preco.toFixed(2)}</span></div>
-    <div><strong style="color: #334155; font-size: 15px; letter-spacing: 0.3px; display: block; margin-bottom: 6px;">✂️ Profissional</strong><span style="font-size: 16px; color: #334155;">${servico.profissional}</span></div>
-    <div><strong style="color: #334155; font-size: 15px; letter-spacing: 0.3px; display: block; margin-bottom: 6px;">⏱️ Tempo</strong><span style="font-size: 16px; color: #334155;">${servico.tempo_minutos} min</span></div>
-  </div>
+<div class="card-servico" style="border-left:8px solid #3b82f6;border-radius:22px;padding:18px;margin-bottom:22px;box-shadow:0 14px 34px -10px rgba(0,0,0,0.12);display:grid;grid-template-columns:1fr 1fr;gap:16px;width:100%;background:linear-gradient(145deg,#fff,#f8fafc);">
+
+<div style="grid-column:1/-1;font-size:18px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px;">💆 ${servico.nome}</div>
+
+${servico.descricao ? `<div style="grid-column:1/-1;font-size:13px;color:#475569;line-height:1.5;background:rgba(0,0,0,0.03);padding:12px;border-radius:12px;">${servico.descricao}</div>` : ""}
+
+<div style="background:rgba(16,185,129,0.08);border-radius:16px;padding:14px;text-align:center;">
+<div style="font-size:12px;font-weight:600;color:#059669;">💰 PREÇO</div>
+<div style="margin-top:4px;font-size:16px;font-weight:800;color:#10b981;">R$ ${servico.preco.toFixed(2)}</div>
+</div>
+
+<div style="background:rgba(59,130,246,0.08);border-radius:16px;padding:14px;text-align:center;">
+<div style="font-size:12px;font-weight:600;color:#2563eb;">⏱️ TEMPO</div>
+<div style="margin-top:4px;font-size:15px;font-weight:700;color:#1e40af;">${servico.tempo_minutos} min</div>
+</div>
+
+<div style="grid-column:1/-1;background:#f1f5f9;border-radius:16px;padding:14px;text-align:center;">
+<div style="font-size:12px;font-weight:600;color:#64748b;">👤 ATENDIDO POR</div>
+<div style="margin-top:4px;font-size:15px;font-weight:700;color:#0f172a;">${servico.profissional}</div>
+</div>
+
+</div>
 `;
+
     });
     
     container.innerHTML = html;
