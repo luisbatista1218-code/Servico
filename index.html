@@ -1281,7 +1281,7 @@ async function entrarAdmin() {
     const configs = await carregarConfiguracoes();
   //  const codigoCorreto = configs.codigo_admin || '123456';
  //   const dados = await fetchSupabase('dono1?select=codigo_admin');
-    const codigoCorreto = dados[0]?.codigo_admin || '123456';
+    const codigoCorreto = dados[0]?.codigo_admin;
     
     if (codigo === codigoCorreto) {
       criarSessaoAdmin(manterConectado);
