@@ -214,6 +214,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
         <div class="form-group"><label class="form-label">Serviço</label><input type="text" class="form-input" id="editarServicoNome" placeholder="Nome do serviço"></div>
         <div class="form-group"><label class="form-label">Preço (R$)</label><input type="number" class="form-input" id="editarServicoPreco" placeholder="30.00" step="0.01"></div>
         <div class="form-group"><label class="form-label">Profissional</label><input type="text" class="form-input" id="editarServicoProfissional" placeholder="João"></div>
+        <div class="form-group"><label class="form-label">Descrição</label><input type="text" class="form-input" id="editarServicoDescricao" placeholder="Máx 40 caracteres" maxlength="40"></div>
         <div class="form-group"><label class="form-label">Tempo (min)</label><select class="form-input" id="editarServicoTempo"><option value="30">30</option><option value="45">45</option><option value="60">60</option><option value="90">90</option></select></div>
       </div>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
@@ -433,6 +434,7 @@ async function adicionarServico() {
   const nome = document.getElementById('editarServicoNome').value.trim();
   const preco = parseFloat(document.getElementById('editarServicoPreco').value);
   const profissional = document.getElementById('editarServicoProfissional').value.trim();
+  const descricao = document.getElementById('editarServicoDescricao').value.trim().substring(0, 40);
   const tempo = parseInt(document.getElementById('editarServicoTempo').value);
   
   if (!nome || !preco || !profissional || !tempo) {
@@ -445,6 +447,7 @@ async function adicionarServico() {
       nome: nome,
       preco: preco,
       profissional: profissional,
+      descricao: descricao || null,
       tempo_minutos: tempo,
       ativo: true
     };
@@ -476,6 +479,7 @@ async function atualizarServico() {
   const nome = document.getElementById('editarServicoNome').value.trim();
   const preco = parseFloat(document.getElementById('editarServicoPreco').value);
   const profissional = document.getElementById('editarServicoProfissional').value.trim();
+  const descricao = document.getElementById('editarServicoDescricao').value.trim().substring(0, 40);
   const tempo = parseInt(document.getElementById('editarServicoTempo').value);
   
   if (!nome || !preco || !profissional || !tempo) {
@@ -488,6 +492,7 @@ async function atualizarServico() {
       nome: nome,
       preco: preco,
       profissional: profissional,
+      descricao: descricao,
       tempo_minutos: tempo
     };
     
@@ -1479,6 +1484,7 @@ function selecionarServicoParaEditar(servicoId) {
     document.getElementById('editarServicoNome').value = servicoEditando.nome;
     document.getElementById('editarServicoPreco').value = servicoEditando.preco;
     document.getElementById('editarServicoProfissional').value = servicoEditando.profissional;
+    document.getElementById('editarServicoDescricao').value = servicoEditando.descricao || '';
     document.getElementById('editarServicoTempo').value = servicoEditando.tempo_minutos;
     mostrarMensagem(`Editando: ${servicoEditando.nome}`, 'info');
   }
