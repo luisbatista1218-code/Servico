@@ -355,8 +355,6 @@ let folgas = [];
 let servicoEditando = null;
 let clientesCache = {};
 let verAgendamento = true;
-let temNovoAgendamento = false;
-let agendamentosVistos = 0;
   
 async function carregarServicos() {
   try {
@@ -1261,42 +1259,6 @@ async function excluirFolgaPelaData() {
   }
 }
 
-async function atualizarBadgeAdmin() {
-  const badge = document.getElementById('badgeNovos');
-  // Busca agendamentos do banco
-  const agendamentos = await fetchSupabase('agenda?select=*&status=eq.confirmado');
-  const totalAgendamentos = agendamentos.length;
-  // Se NÃO for admin, esconde tudo
-  if (!verificarSessaoAdmin()) {
-    badge.style.display = 'none';
-    if ('clearAppBadge' in navigator) navigator.clearAppBadge();
-    return;
-  }
-  // SE FOR ADMIN, mostra se tiver agendamentos
-  if (totalAgendamentos > 0) {
-    // Mostra SINO 🔔
-    badge.innerHTML = '🔔';
-    badge.style.display = 'flex';
-    badge.style.fontSize = '16px';
-    badge.style.background = 'none';
-    badge.style.minWidth = 'auto';
-    badge.style.padding = '0';
-    // Badge nativo do PWA
-    if ('setAppBadge' in navigator) {
-      navigator.setAppBadge(1);
-    }
-     // VIBRAÇÃO (só se for novo)
-    if (totalAgendamentos > agendamentosVistos) {
-      if ('vibrate' in navigator) {
-        navigator.vibrate([200, 100, 200]);
-      }
-      agendamentosVistos = totalAgendamentos;
-    }
-  } else {
-    badge.style.display = 'none';
-    if ('clearAppBadge' in navigator) navigator.clearAppBadge();
-  }
-}
   
 const ADMIN_SESSION_KEY = 'admin_session';
 
@@ -1320,10 +1282,6 @@ function criarSessaoAdmin(manterConectado) {
 function sairAdmin() {
   localStorage.removeItem(ADMIN_SESSION_KEY);
   document.getElementById('btnAdmin').innerHTML = '⚙️ ADM';
-
-  agendamentosVistos = 0;
-  document.getElementById('badgeNovos').style.display = 'none';
-  if ('clearAppBadge' in navigator) navigator.clearAppBadge();
   
   mostrarTela('inicio');
 }
@@ -1358,11 +1316,6 @@ async function entrarAdmin() {
       fecharLoginAdmin();
       mostrarTela('admin');
       mostrarMensagem('Acesso concedido! 👑', 'sucesso');
-    
-      const agendamentos = await fetchSupabase('agenda?select=*&status=eq.confirmado');
-      agendamentosVistos = agendamentos.length;
-      document.getElementById('badgeNovos').style.display = 'none';
-      if ('clearAppBadge' in navigator) navigator.clearAppBadge();
 
     } else {
       mostrarMensagem('Código inválido!', 'erro');
@@ -1589,9 +1542,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   
   mostrarTela('inicio');
-  
-  setInterval(atualizarBadgeAdmin, 10000);
-  atualizarBadgeAdmin();
   
   // ========== BOTÕES DO MODAL ==========
   
