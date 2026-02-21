@@ -356,6 +356,7 @@ let servicoEditando = null;
 let clientesCache = {};
 let verAgendamento = true;
 let temNovoAgendamento = false;
+let agendamentosVistos = 0;
   
 async function carregarServicos() {
   try {
@@ -1586,7 +1587,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   
   mostrarTela('inicio');
-
+  
+  setInterval(atualizarBadgeAdmin, 10000);
+  atualizarBadgeAdmin();
+  
   // ========== BOTÕES DO MODAL ==========
   
   // BOTÃO CONFIRMAR
