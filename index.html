@@ -355,6 +355,7 @@ let folgas = [];
 let servicoEditando = null;
 let clientesCache = {};
 let verAgendamento = true;
+let temNovoAgendamento = false;
   
 async function carregarServicos() {
   try {
@@ -717,9 +718,6 @@ for (let dia = 1; dia <= ultimoDia.getDate(); dia++) {
   
   document.getElementById('gradeDias').innerHTML = html;
   
-/*  if (!dataSelecionada || new Date(dataSelecionada + 'T00:00:00') < hojeLocal) {
-    dataSelecionada = hojeFormatado;
-  }*/
 }
 
 function mesAnterior() { 
@@ -1261,6 +1259,41 @@ async function excluirFolgaPelaData() {
     mostrarMensagem('Erro','erro');
   }
 }
+
+async function atualizarBadgeAdmin() {
+  const badge = document.getElementById('badgeNovos');
+  // 1. Se NÃO for admin, esconde tudo
+  if (!verificarSessaoAdmin()) {
+    badge.style.display = 'none';
+    if ('clearAppBadge' in navigator) navigator.clearAppBadge();
+    return;
+  }
+  // 2. Busca agendamentos do banco
+  const agendamentos = await fetchSupabase('agenda?select=*&status=eq.confirmado');
+  const totalAgendamentos = agendamentos.length;
+    // 3. Se tem agendamento novo (maior que o último visto)
+  if (totalAgendamentos > agendamentosVistos) {
+    temNovoAgendamento = true;
+    // VIBRAÇÃO
+    if ('vibrate' in navigator) {
+      navigator.vibrate([200, 100, 200]); // vibra 3x
+    }
+    // Mostra SINO 🔔
+    badge.innerHTML = '🔔';
+    badge.style.display = 'flex';
+    badge.style.fontSize = '16px';
+    badge.style.background = 'none';
+    badge.style.minWidth = 'auto';
+    badge.style.padding = '0';
+     // Badge nativo do PWA (opcional)
+    if ('setAppBadge' in navigator) {
+      navigator.setAppBadge(1); // só indica que tem algo
+    }
+  } else {
+    badge.style.display = 'none';
+    if ('clearAppBadge' in navigator) navigator.clearAppBadge();
+  }
+}
   
 const ADMIN_SESSION_KEY = 'admin_session';
 
@@ -1284,6 +1317,11 @@ function criarSessaoAdmin(manterConectado) {
 function sairAdmin() {
   localStorage.removeItem(ADMIN_SESSION_KEY);
   document.getElementById('btnAdmin').innerHTML = '⚙️ ADM';
+
+  agendamentosVistos = 0;
+  document.getElementById('badgeNovos').style.display = 'none';
+  if ('clearAppBadge' in navigator) navigator.clearAppBadge();
+  
   mostrarTela('inicio');
 }
 
@@ -1306,8 +1344,7 @@ async function entrarAdmin() {
   const manterConectado = document.getElementById('manterConectado').checked;
   
   try {
-   // const configs = await carregarConfiguracoes();
-  //  const codigoCorreto = configs.codigo_admin || '123456';
+    
     const dados = await fetchSupabase('dono1?select=codigo_admin');
     const codigoCorreto = dados[0]?.codigo_admin;
     localStorage.setItem('admin_senha', codigo);
@@ -1318,6 +1355,12 @@ async function entrarAdmin() {
       fecharLoginAdmin();
       mostrarTela('admin');
       mostrarMensagem('Acesso concedido! 👑', 'sucesso');
+    
+      const agendamentos = await fetchSupabase('agenda?select=*&status=eq.confirmado');
+      agendamentosVistos = agendamentos.length;
+      document.getElementById('badgeNovos').style.display = 'none';
+      if ('clearAppBadge' in navigator) navigator.clearAppBadge();
+
     } else {
       mostrarMensagem('Código inválido!', 'erro');
     }
