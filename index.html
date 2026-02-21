@@ -1263,22 +1263,17 @@ async function excluirFolgaPelaData() {
 
 async function atualizarBadgeAdmin() {
   const badge = document.getElementById('badgeNovos');
-  // 1. Se NÃO for admin, esconde tudo
+  // Busca agendamentos do banco
+  const agendamentos = await fetchSupabase('agenda?select=*&status=eq.confirmado');
+  const totalAgendamentos = agendamentos.length;
+  // Se NÃO for admin, esconde tudo
   if (!verificarSessaoAdmin()) {
     badge.style.display = 'none';
     if ('clearAppBadge' in navigator) navigator.clearAppBadge();
     return;
   }
-  // 2. Busca agendamentos do banco
-  const agendamentos = await fetchSupabase('agenda?select=*&status=eq.confirmado');
-  const totalAgendamentos = agendamentos.length;
-    // 3. Se tem agendamento novo (maior que o último visto)
-  if (totalAgendamentos > agendamentosVistos) {
-    temNovoAgendamento = true;
-    // VIBRAÇÃO
-    if ('vibrate' in navigator) {
-      navigator.vibrate([200, 100, 200]); // vibra 3x
-    }
+  // SE FOR ADMIN, mostra se tiver agendamentos
+  if (totalAgendamentos > 0) {
     // Mostra SINO 🔔
     badge.innerHTML = '🔔';
     badge.style.display = 'flex';
@@ -1286,9 +1281,16 @@ async function atualizarBadgeAdmin() {
     badge.style.background = 'none';
     badge.style.minWidth = 'auto';
     badge.style.padding = '0';
-     // Badge nativo do PWA (opcional)
+    // Badge nativo do PWA
     if ('setAppBadge' in navigator) {
-      navigator.setAppBadge(1); // só indica que tem algo
+      navigator.setAppBadge(1);
+    }
+     // VIBRAÇÃO (só se for novo)
+    if (totalAgendamentos > agendamentosVistos) {
+      if ('vibrate' in navigator) {
+        navigator.vibrate([200, 100, 200]);
+      }
+      agendamentosVistos = totalAgendamentos;
     }
   } else {
     badge.style.display = 'none';
