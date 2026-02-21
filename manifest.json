@@ -3,8 +3,8 @@
   "short_name": "servico1",
   "start_url": "/index.html",
   "display": "standalone",
-  "background_color": "#28004a",
-  "theme_color": "#3a0060",
+  "background_color": "#0b1120",
+  "theme_color": "#1a2639",
   "orientation": "portrait",
   "icons": [
     {
@@ -19,4 +19,3 @@
     }
   ]
 }
-
