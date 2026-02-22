@@ -1020,6 +1020,11 @@ function finalizarSelecaoServico(servicoId) {
 async function confirmarAgendamento() {
   const nome = document.getElementById('nomeCliente').value.trim();
   const telefone = document.getElementById('telefoneCliente').value.trim();
+
+ if (telefone.length !== 11 || telefone[2] !== '9') {
+    mostrarMensagem('telefone inválido');
+    return;
+  }
   
   if (!nome || !telefone || !dataSelecionada || !horarioSelecionado || !servicoSelecionado || !profissionalSelecionado) {
     mostrarMensagem('Preencha todos os campos!', 'erro');
@@ -1216,7 +1221,7 @@ async function carregarAgendaCliente() {
 }
   
 
-async function apagarAgendamentoIndividual(agendamentoId, origem) {
+/*async function apagarAgendamentoIndividual(agendamentoId, origem) {
   try {
     await fetchSupabase(`agenda?id=eq.${agendamentoId}`, {
       method: 'DELETE'
@@ -1242,8 +1247,45 @@ async function apagarAgendamentoIndividual(agendamentoId, origem) {
   } catch (error) {
     mostrarMensagem('Erro ao apagar agendamento', 'erro');
   }
+}*/
+async function apagarAgendamentoIndividual(agendamentoId, origem) {
+  try {
+    // 1. Busca o agendamento pra saber o status atual
+    const agendamentos = await fetchSupabase(`agenda?id=eq.${agendamentoId}&select=status`);
+    const statusAtual = agendamentos[0].status;
+    
+    // 2. Só muda status se NÃO for concluído
+    if (statusAtual !== 'concluido') {
+      const novoStatus = origem === 'cliente' ? 'cliente cancelou' : 'adm cancelou';
+      
+      await fetchSupabase(`agenda?id=eq.${agendamentoId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: novoStatus })
+      });
+    }
+    
+    // 3. Remove da lista que aparece na tela (localStorage)
+    let comprovantes = localStorage.getItem('todos_comprovantes');
+    if (comprovantes) {
+      let lista = JSON.parse(comprovantes);
+      lista = lista.filter(item => item.id !== agendamentoId);
+      localStorage.setItem('todos_comprovantes', JSON.stringify(lista));
+    }
+    
+    // 4. Mensagem e recarregar telas
+    mostrarMensagem('Removido');
+    
+    if (origem === 'cliente') await carregarAgendaCliente();
+    else {
+      await carregarAgendamentos();
+      carregarTodosAgendamentos();
+    }
+    
+  } catch (error) {
+    mostrarMensagem('Erro');
+  }
 }
-
+  
 async function excluirFolgaPelaData() {
   const data = document.getElementById('dataFolga').value;
   if (!data) return mostrarMensagem('Selecione uma data!','erro');
