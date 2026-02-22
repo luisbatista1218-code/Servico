@@ -1044,6 +1044,7 @@ async function confirmarAgendamento() {
     });
     
     const clienteId = clienteResult[0].id;
+localStorage.setItem('cliente_id', clienteId); // ← SÓ ISSO!
     
     const agendamentoData = {
       cliente_id: clienteId,
