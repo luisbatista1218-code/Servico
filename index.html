@@ -1250,12 +1250,9 @@ async function carregarAgendaCliente() {
 }*/
 async function apagarAgendamentoIndividual(agendamentoId, origem) {
   try {
-    // 1. Busca o agendamento pra saber o status atual
-    const agendamentos = await fetchSupabase(`agenda?id=eq.${agendamentoId}&select=status`);
-    const statusAtual = agendamentos[0].status;
-    
-    // 2. Só muda status se NÃO for concluído
+    // 1. SÓ FAZ ALGO SE NÃO FOR CONCLUÍDO
     if (statusAtual !== 'concluido') {
+      // MUDA STATUS NO BANCO
       const novoStatus = origem === 'cliente' ? 'cliente cancelou' : 'adm cancelou';
       
       await fetchSupabase(`agenda?id=eq.${agendamentoId}`, {
@@ -1264,25 +1261,35 @@ async function apagarAgendamentoIndividual(agendamentoId, origem) {
       });
     }
     
-    // 3. Remove da lista que aparece na tela (localStorage)
-    let comprovantes = localStorage.getItem('todos_comprovantes');
-    if (comprovantes) {
-      let lista = JSON.parse(comprovantes);
-      lista = lista.filter(item => item.id !== agendamentoId);
-      localStorage.setItem('todos_comprovantes', JSON.stringify(lista));
+    // 2. CLIENTE: remove do localStorage (tela dele)
+    if (origem === 'cliente') {
+      let comprovantes = localStorage.getItem('todos_comprovantes');
+      if (comprovantes) {
+        let lista = JSON.parse(comprovantes);
+        lista = lista.filter(item => item.id !== agendamentoId);
+        localStorage.setItem('todos_comprovantes', JSON.stringify(lista));
+      }
+      await carregarAgendaCliente();
     }
     
-    // 4. Mensagem e recarregar telas
-    mostrarMensagem('Removido');
-    
-    if (origem === 'cliente') await carregarAgendaCliente();
+    // 3. ADMIN: marca como removido da tela
     else {
+      let removidosTela = localStorage.getItem('removidos_tela_admin');
+      removidosTela = removidosTela ? JSON.parse(removidosTela) : [];
+      
+      if (!removidosTela.includes(agendamentoId)) {
+        removidosTela.push(agendamentoId);
+        localStorage.setItem('removidos_tela_admin', JSON.stringify(removidosTela));
+      }
+      
       await carregarAgendamentos();
       carregarTodosAgendamentos();
     }
     
+    mostrarMensagem('Removido da lista!', 'sucesso');
+    
   } catch (error) {
-    mostrarMensagem('Erro');
+    mostrarMensagem('Erro', 'erro');
   }
 }
   
