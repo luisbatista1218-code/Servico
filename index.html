@@ -1222,7 +1222,6 @@ localStorage.setItem('todos_comprovantes', JSON.stringify(comprovantes));
 }*/
   
 
-      
  async function carregarAgendaCliente() {
   const container = document.getElementById('listaAgendaCliente');
   container.innerHTML = '<div class="loading"><div class="loading-spinner"></div>Carregando...</div>';
@@ -1231,54 +1230,43 @@ localStorage.setItem('todos_comprovantes', JSON.stringify(comprovantes));
     // TENTA PEGAR O ID DA MEMÓRIA
     let clienteId = localStorage.getItem('cliente_id');
     
-    // SE NÃO TEM ID, USA O TELEFONE (QUE JÁ EXISTE)
+    // SE NÃO TEM ID, TENTA PELO TELEFONE
     if (!clienteId) {
       const telefone = localStorage.getItem('cliente_telefone');
-      
-      if (!telefone) {
-        // CAIXINHA MINÚSCULA (do jeito que você quer)
-        container.innerHTML = `
-          <div style="background: white; border-radius: 8px; padding: 12px; text-align: center; border: 1px solid #e2e8f0; margin: 10px 0;">
-            <div style="font-size: 20px; margin-bottom: 5px;">📱</div>
-            <p style="font-size: 13px; color: #64748b; margin-bottom: 8px;">Para ver seus agendamentos</p>
-            <input type="tel" id="telefoneRecuperacao" placeholder="DDD + Telefone" style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 13px; margin-bottom: 8px;">
-            <button onclick="recuperarAgendamentos()" style="background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; width: 100%;">
-              Buscar
-            </button>
-          </div>
-        `;
-        return;
-      }
-      
-      // BUSCA CLIENTE PELO TELEFONE
-      const clientes = await fetchSupabase(`clientes?telefone=eq.${telefone.replace(/\D/g, '')}`);
-      if (clientes.length > 0) {
-        clienteId = clientes[0].id;
-        localStorage.setItem('cliente_id', clienteId);
+      if (telefone) {
+        const clientes = await fetchSupabase(`clientes?telefone=eq.${telefone.replace(/\D/g, '')}`);
+        if (clientes.length > 0) {
+          clienteId = clientes[0].id;
+          localStorage.setItem('cliente_id', clienteId);
+        }
       }
     }
     
-    // SE AINDA NÃO TEM ID, MOSTRA MENSAGEM
     if (!clienteId) {
+      // SUA DIV BONITA DE "FAÇA UM AGENDAMENTO"
       container.innerHTML = `
-        <div style="text-align: center; padding: 20px; color: #64748b;">
-          📅<br>
-          <p style="font-size: 14px;">Nenhum agendamento encontrado</p>
+        <div style="text-align: center; padding: 40px; color: #64748b;">
+          📱<br>
+          <h3>Faça um agendamento primeiro</h3>
+          <p>Seus agendamentos aparecerão aqui automaticamente</p>
+          <button class="btn-limpar" onclick="mostrarCalendario()" style="margin-top: 20px; background: #3b82f6; color: white; border: none; padding: 12px 24px; border-radius: 8px;">
+            📅 Agendar agora
+          </button>
         </div>
       `;
       return;
     }
 
-    // BUSCA AGENDAMENTOS DO BANCO (AQUI É BANCO DE VERDADE!)
+    // BUSCA DO BANCO (AQUI É A ÚNICA MUDANÇA)
     const agendamentosDoCliente = await fetchSupabase(
       `agenda?cliente_id=eq.${clienteId}&select=*&order=data_agendamento.desc`
     );
 
     if (agendamentosDoCliente.length === 0) {
       container.innerHTML = `
-        <div style="text-align: center; padding: 20px; color: #64748b;">
+        <div style="text-align: center; padding: 40px; color: #64748b;">
           📅<br>
-          <p style="font-size: 14px;">Você ainda não tem agendamentos</p>
+          <h3>Você ainda não tem agendamentos</h3>
         </div>
       `;
       return;
@@ -1293,43 +1281,65 @@ localStorage.setItem('todos_comprovantes', JSON.stringify(comprovantes));
       const dataObj = new Date(ag.data_agendamento + 'T' + ag.horario);
       const dataFormatada = dataObj.toLocaleDateString('pt-BR');
       
-      // DEFINE O STATUS (vem do banco!)
-      let statusBg = '#dbeafe';
-      let statusCor = '#2563eb';
-      let statusTexto = 'Confirmado';
-      let statusIcone = '🟡';
-      
-      if (ag.status === 'concluido') {
-        statusBg = '#dcfce7';
-        statusCor = '#059669';
-        statusTexto = 'Concluído';
-        statusIcone = '✅';
-      } else if (ag.status === 'cliente cancelou' || ag.status === 'adm cancelou') {
-        statusBg = '#fee2e2';
-        statusCor = '#dc2626';
-        statusTexto = 'Cancelado';
-        statusIcone = '❌';
-      }
-      
+      // SUA DIV BONITA ORIGINAL (COMPLETA!)
       html += `
-        <div style="background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid #e2e8f0; position: relative;">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-            <span style="font-weight: 600; font-size: 16px;">${servico?.nome || 'Serviço'}</span>
-            <button onclick="abrirModalExclusao('${ag.id}', 'cliente')" style="background: none; border: none; font-size: 18px; cursor: pointer;">🗑️</button>
+        <div style="background: white; border-radius: 20px; padding: 24px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; position: relative;">
+          
+          <!-- CABEÇALHO COM SERVIÇO E LIXEIRA -->
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+            <div>
+              <span style="font-size: 20px; font-weight: 700; color: #0f172a;">${servico?.nome || ag.servico}</span>
+              <span style="display: inline-block; margin-left: 12px; padding: 4px 12px; background: #f1f5f9; border-radius: 100px; font-size: 13px; color: #475569;">
+                ⏱️ ${servico?.tempo_minutos || 30}min
+              </span>
+            </div>
+            <button onclick="abrirModalExclusao('${ag.id}', 'cliente')" style="background: none; border: none; font-size: 22px; cursor: pointer; padding: 4px; color: #94a3b8; transition: color 0.2s;">
+              🗑️
+            </button>
           </div>
           
-          <div style="font-size: 13px; color: #475569; margin-bottom: 8px;">
-            <div>👨‍💼 ${servico?.profissional || ''}</div>
-            <div>📅 ${dataFormatada} às ${ag.horario}</div>
-            <div>💰 R$ ${parseFloat(ag.valor).toFixed(2)}</div>
+          <!-- GRID DE INFORMAÇÕES -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+            <div>
+              <div style="font-size: 12px; color: #64748b; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">👨‍💼 Profissional</div>
+              <div style="font-weight: 600; color: #0f172a; font-size: 16px;">${servico?.profissional || ag.profissional}</div>
+            </div>
+            <div>
+              <div style="font-size: 12px; color: #64748b; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">📅 Data</div>
+              <div style="font-weight: 600; color: #0f172a; font-size: 16px;">${dataFormatada}</div>
+            </div>
+            <div>
+              <div style="font-size: 12px; color: #64748b; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">⏰ Horário</div>
+              <div style="font-weight: 600; color: #0f172a; font-size: 16px;">${ag.horario}</div>
+            </div>
+            <div>
+              <div style="font-size: 12px; color: #64748b; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">💰 Valor</div>
+              <div style="font-weight: 700; color: #059669; font-size: 18px;">R$ ${parseFloat(ag.valor).toFixed(2)}</div>
+            </div>
           </div>
           
-          <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; padding-top: 8px;">
-            <span style="background: ${statusBg}; color: ${statusCor}; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">
-              ${statusIcone} ${statusTexto}
-            </span>
-            <span style="font-family: monospace; font-size: 14px; color: #3b82f6;">${ag.codigo_confirmacao || ''}</span>
+          <!-- STATUS E CÓDIGO -->
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 16px; border-top: 2px solid #f1f5f9;">
+            <div>
+              <span style="display: inline-flex; align-items: center; gap: 6px; background: ${ag.status === 'concluido' ? '#dcfce7' : '#dbeafe'}; padding: 6px 16px; border-radius: 100px; font-size: 13px; font-weight: 600; color: ${ag.status === 'concluido' ? '#059669' : '#2563eb'};">
+                <span style="font-size: 14px;">${ag.status === 'concluido' ? '✅' : '🟡'}</span> 
+                ${ag.status === 'concluido' ? 'Concluído' : ag.status === 'cliente cancelou' || ag.status === 'adm cancelou' ? 'Cancelado' : 'Confirmado'}
+              </span>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: flex-end;">
+              <span style="font-size: 11px; color: #64748b; margin-bottom: 4px;">Código</span>
+              <span style="font-family: 'Courier New', monospace; font-size: 18px; font-weight: 700; color: #3b82f6; letter-spacing: 2px; background: #eff6ff; padding: 4px 12px; border-radius: 8px;">
+                ${ag.codigo_confirmacao || ag.codigo}
+              </span>
+            </div>
           </div>
+          
+          <!-- RODAPÉ COM TELEFONE -->
+          <div style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed #e2e8f0; font-size: 13px; color: #64748b; display: flex; justify-content: space-between;">
+            <span>📱 ${ag.telefone || telefone}</span>
+            <span>👤 ${ag.cliente || clientes[0].nome}</span>
+          </div>
+          
         </div>
       `;
     });
@@ -1337,13 +1347,20 @@ localStorage.setItem('todos_comprovantes', JSON.stringify(comprovantes));
     container.innerHTML = html;
 
   } catch (error) {
-    container.innerHTML = '<p style="color: #ef4444; text-align: center;">Erro</p>';
+    console.error(error);
+    container.innerHTML = `
+      <div style="text-align: center; padding: 40px; color: #ef4444;">
+        ⚠️<br>
+        <h3>Erro ao carregar</h3>
+        <button class="btn-limpar" onclick="carregarAgendaCliente()">Tentar novamente</button>
+      </div>
+    `;
   }
- }
-           
-         
+}       
+    
+      
   
-/*async function apagarAgendamentoIndividual(agendamentoId, origem) {
+async function apagarAgendamentoIndividual(agendamentoId, origem) {
   try {
     await fetchSupabase(`agenda?id=eq.${agendamentoId}`, {
       method: 'DELETE'
@@ -1369,52 +1386,9 @@ localStorage.setItem('todos_comprovantes', JSON.stringify(comprovantes));
   } catch (error) {
     mostrarMensagem('Erro ao apagar agendamento', 'erro');
   }
-}*/
-async function apagarAgendamentoIndividual(agendamentoId, origem) {
-  try {
-    // 1. SÓ FAZ ALGO SE NÃO FOR CONCLUÍDO
-    if (statusAtual !== 'concluido') {
-      // MUDA STATUS NO BANCO
-      const novoStatus = origem === 'cliente' ? 'cliente cancelou' : 'adm cancelou';
-      
-      await fetchSupabase(`agenda?id=eq.${agendamentoId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status: novoStatus })
-      });
-    }
-    
-    // 2. CLIENTE: remove do localStorage (tela dele)
-    if (origem === 'cliente') {
-      let comprovantes = localStorage.getItem('todos_comprovantes');
-      if (comprovantes) {
-        let lista = JSON.parse(comprovantes);
-        lista = lista.filter(item => item.id !== agendamentoId);
-        localStorage.setItem('todos_comprovantes', JSON.stringify(lista));
-      }
-      await carregarAgendaCliente();
-    }
-    
-    // 3. ADMIN: marca como removido da tela
-    else {
-      let removidosTela = localStorage.getItem('removidos_tela_admin');
-      removidosTela = removidosTela ? JSON.parse(removidosTela) : [];
-      
-      if (!removidosTela.includes(agendamentoId)) {
-        removidosTela.push(agendamentoId);
-        localStorage.setItem('removidos_tela_admin', JSON.stringify(removidosTela));
-      }
-      
-      await carregarAgendamentos();
-      carregarTodosAgendamentos();
-    }
-    
-    mostrarMensagem('Removido da lista!', 'sucesso');
-    
-  } catch (error) {
-    mostrarMensagem('Erro', 'erro');
-  }
 }
   
+    
 async function excluirFolgaPelaData() {
   const data = document.getElementById('dataFolga').value;
   if (!data) return mostrarMensagem('Selecione uma data!','erro');
