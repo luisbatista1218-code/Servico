@@ -1020,6 +1020,12 @@ function finalizarSelecaoServico(servicoId) {
 async function enviarTelegram(mensagem) {
   const BOT_TOKEN = '8205702578:AAFw4c3aRUR5oDDhH5WWAdOctM9rPLOIHac';
   const CHAT_ID = '1232955171';
+  // TRAVA PRA NÃO ENVIAR REPETIDO
+  if (window.ultimaMensagem === mensagem) {
+    console.log('Mensagem duplicada ignorada');
+    return;
+  }
+   window.ultimaMensagem = mensagem;
   
   try {
     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
@@ -1034,7 +1040,7 @@ async function enviarTelegram(mensagem) {
   } catch (error) {
     console.error('Erro ao enviar Telegram:', error);
   }
- }
+}
 
 async function confirmarAgendamento() {
   const nome = document.getElementById('nomeCliente').value.trim();
@@ -1242,13 +1248,16 @@ async function carregarAgendaCliente() {
                      
 async function apagarAgendamentoIndividual(agendamentoId, origem) {
   try {
+    // telegram
+    const resultado = await fetchSupabase(`agenda?id=eq.${agendamentoId}&select=codigo_confirmacao`);
+    const codigo = resultado[0]?.codigo_confirmacao;
+    
     await fetchSupabase(`agenda?id=eq.${agendamentoId}`, {
       method: 'DELETE'
     });
-  
-// manda telegram
+    //telegram
     const acao = origem === 'cliente' ? 'CLIENTE' : 'ADMIN';
-    const msg = `❌ CANCELOU\nCódigo: ${agendamentoId}\nQuem: ${acao}`;
+    const msg = `❌ CANCELOU\nCódigo: ${codigo}\nQuem: ${acao}`;
     await enviarTelegram(msg);
 // Remover da lista de comprovantes
     let comprovantes = localStorage.getItem('todos_comprovantes');
