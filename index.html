@@ -1017,6 +1017,25 @@ function finalizarSelecaoServico(servicoId) {
   mostrarHorariosDisponiveis();
 }
 
+async function enviarTelegram(mensagem) {
+  const BOT_TOKEN = '8205702578:AAFw4c3aRUR5oDDhH5WWAdOctM9rPLOIHac';
+  const CHAT_ID = '1232955171';
+  
+  try {
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: CHAT_ID,
+        text: mensagem,
+        parse_mode: 'HTML'
+      })
+    });
+  } catch (error) {
+    console.error('Erro ao enviar Telegram:', error);
+  }
+ }
+
 async function confirmarAgendamento() {
   const nome = document.getElementById('nomeCliente').value.trim();
   const telefone = document.getElementById('telefoneCliente').value.trim();
@@ -1061,7 +1080,9 @@ async function confirmarAgendamento() {
       body: JSON.stringify(agendamentoData)
     });
     
-
+// manda telegram
+const msg = `✅ AGENDAMENTO\nCódigo: ${agendamentoData.codigo_confirmacao}`;
+enviarTelegram(msg);
 // 🔥 PEGAR O ID QUE O BANCO GEROU!
 const agendamentos = await fetchSupabase('agenda?select=id&order=created_at.desc&limit=1');
 const agendamentoId = agendamentos[0].id; 
@@ -1224,8 +1245,12 @@ async function apagarAgendamentoIndividual(agendamentoId, origem) {
     await fetchSupabase(`agenda?id=eq.${agendamentoId}`, {
       method: 'DELETE'
     });
-    
-    // Remover da lista de comprovantes
+  
+// manda telegram
+    const acao = origem === 'cliente' ? 'CLIENTE' : 'ADMIN';
+    const msg = `❌ CANCELOU\nCódigo: ${agendamentoId}\nQuem: ${acao}`;
+    await enviarTelegram(msg);
+// Remover da lista de comprovantes
     let comprovantes = localStorage.getItem('todos_comprovantes');
     if (comprovantes) {
       let lista = JSON.parse(comprovantes);
