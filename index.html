@@ -1042,6 +1042,23 @@ async function enviarTelegram(mensagem) {
   }
 }
 
+async function verificarLimiteDiario(clienteId, data) {
+  try {
+    const agendamentos = await fetchSupabase(
+      `agenda?cliente_id=eq.${clienteId}&data_agendamento=eq.${data}&select=id`
+    );
+    
+    if (agendamentos.length >= 5) {
+      mostrarMensagem('Limite de 5 agendamentos por dia!');
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Erro ao verificar limite:', error);
+    return false;
+  }
+}  
 async function confirmarAgendamento() {
   const nome = document.getElementById('nomeCliente').value.trim();
   const telefone = document.getElementById('telefoneCliente').value.trim();
@@ -1067,9 +1084,13 @@ async function confirmarAgendamento() {
       method: 'POST',
       body: JSON.stringify(clienteData)
     });
-    
+    //limite agendamento
     const clienteId = clienteResult[0].id;
-
+    const podeAgendar = await verificarLimiteDiario(clienteId, dataSelecionada);
+    if (!podeAgendar) {
+      return; 
+    }
+    
     const agendamentoData = {
       cliente_id: clienteId,
       servico_id: servicoSelecionado.id,
@@ -1087,7 +1108,12 @@ async function confirmarAgendamento() {
     });
     
 // manda telegram
-const msg = `✅ AGENDAMENTO\nCódigo: ${agendamentoData.codigo_confirmacao}`;
+const msg = `AGENDAMENTO\n` +
+  `${dataSelecionada} ${horarioSelecionado}\n` +
+  `${nome} - ${telefone}\n` +
+  `${servicoSelecionado.nome} - ${profissionalSelecionado}\n` +
+  `R$ ${servicoSelecionado.preco.toFixed(2)}\n` +
+  `Cod: ${agendamentoData.codigo_confirmacao}`;
 enviarTelegram(msg);
 // 🔥 PEGAR O ID QUE O BANCO GEROU!
 const agendamentos = await fetchSupabase('agenda?select=id&order=created_at.desc&limit=1');
