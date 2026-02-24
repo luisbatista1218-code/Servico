@@ -1041,20 +1041,25 @@ async function enviarTelegram(mensagem) {
     console.error('Erro ao enviar Telegram:', error);
   }
 }
-async function verificarLimiteDiario(telefone, data) {
-  // 1. PROCURA CLIENTE PELO TELEFONE
-  const clientes = await fetchSupabase(`clientes?telefone=eq.${telefone.replace(/\D/g, '')}`);
-   if (clientes.length === 0) return true; // Cliente novo, pode agendar
 
-  const agendamentos = await fetchSupabase(
-    `agenda?cliente_id=eq.${clientes[0].id}&data_agendamento=eq.${data}&select=id`
-  );
+
+async function verificarLimiteDiario(telefone, data) {
+  alert('1. Função iniciou');
+  alert('2. Telefone: ' + telefone);
   
-  if (agendamentos.length >= 5) {
-    mostrarMensagem('Você já tem 5 agendamentos neste dia!', 'erro');
-    return false;
+  try {
+    const telefoneLimpo = telefone.replace(/\D/g, '');
+    alert('3. Telefone limpo: ' + telefoneLimpo);
+    
+    alert('4. Buscando cliente...');
+    const clientes = await fetchSupabase(`clientes?telefone=eq.${telefoneLimpo}`);
+    alert('5. Clientes: ' + JSON.stringify(clientes));
+    
+    return true;
+  } catch (error) {
+    alert('6. ERRO: ' + error.message);
+    return true;
   }
-  return true;
 }
  
 async function confirmarAgendamento() {
