@@ -1086,7 +1086,7 @@ async function confirmarAgendamento() {
       method: 'POST',
       body: JSON.stringify(clienteData)
     });
-
+  const clienteId = clienteResult[0].id; 
     
     const agendamentoData = {
       cliente_id: clienteId,
