@@ -1088,9 +1088,9 @@ async function confirmarAgendamento() {
       body: JSON.stringify(clienteData)
     });
     //limite agendamento
-const telefone = document.getElementById('telefoneCliente').value;
+/*const telefone = document.getElementById('telefoneCliente').value;
 const pode = await verificarLimiteDiario(telefone, dataSelecionada);
-if (!pode) return;
+if (!pode) return;*/
     
     const agendamentoData = {
       cliente_id: clienteId,
