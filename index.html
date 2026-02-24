@@ -1042,28 +1042,28 @@ async function enviarTelegram(mensagem) {
   }
 }
 
-async function verificarLimiteDiario(telefone, data) {
-  // 🔥 USA DIRETO, SEM LIMPAR!
-  const clientes = await fetchSupabase(`clientes?telefone=eq.${telefone}`);
+  async function verificarLimiteDiario(telefone, data) {
+  const tel = telefone.replace(/\D/g, '');
   
-  if (clientes.length === 0) return true;
-  
-  const agenda = await fetchSupabase(
-    `agenda?cliente_id=eq.${clientes[0].id}&data_agendamento=eq.${data}`
+  // CONTA QUANTOS AGENDAMENTOS DESSE TELEFONE NESSA DATA
+  const agendamentos = await fetchSupabase(
+    `agenda?telefone=eq.${tel}&data_agendamento=eq.${data}&select=id`
   );
   
-  if (agenda.length >= 5) {
-    mostrarMensagem('Limite de 5!', 'erro');
+  if (agendamentos.length >= 5) {
+    mostrarMensagem('Limite de 5 agendamentos por dia!', 'erro');
     return false;
   }
   
   return true;
 }
-
  
 async function confirmarAgendamento() {
   const nome = document.getElementById('nomeCliente').value.trim();
   const telefone = document.getElementById('telefoneCliente').value.trim();
+
+  const pode = await verificarLimiteDiario(telefone, dataSelecionada);
+if (!pode) return;
 
  if (telefone.length !== 11 || telefone[2] !== '9') {
     mostrarMensagem('telefone inválido');
@@ -1082,32 +1082,11 @@ async function confirmarAgendamento() {
       codigo_secreto: 'cli_' + Date.now()
     };
     
-  /*  const clienteResult = await fetchSupabase('clientes', {
+    const clienteResult = await fetchSupabase('clientes', {
       method: 'POST',
       body: JSON.stringify(clienteData)
     });
-  const clienteId = clienteResult[0].id;*/ 
-const telefoneLimpo = telefone.replace(/\D/g, '');
-let cliente = await fetchSupabase(
-  `clientes?telefone=eq.${telefoneLimpo}`
-);
-
-let clienteId;
-
-if (cliente.length > 0) {
-  clienteId = cliente[0].id;
-} else {
-  const novoCliente = await fetchSupabase('clientes', {
-    method: 'POST',
-    body: JSON.stringify({
-      nome,
-      telefone: telefoneLimpo,
-      codigo_secreto: 'cli_' + Date.now()
-    })
-  });
-
-  clienteId = novoCliente[0].id;
-}
+  const clienteId = clienteResult[0].id;
     
     const agendamentoData = {
       cliente_id: clienteId,
@@ -1117,7 +1096,8 @@ if (cliente.length > 0) {
       status: 'confirmado',
       valor: servicoSelecionado.preco,
       duracao_minutos: servicoSelecionado.tempo_minutos,
-      codigo_confirmacao: Math.random().toString(36).substring(2, 10).toUpperCase()
+      codigo_confirmacao: Math.random().toString(36).substring(2, 10).toUpperCase(),
+      telefone: telefone.replace(/\D/g, '')
     };
     
     await fetchSupabase('agenda', {
