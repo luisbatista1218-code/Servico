@@ -1042,25 +1042,24 @@ async function enviarTelegram(mensagem) {
   }
 }
 
-
 async function verificarLimiteDiario(telefone, data) {
-  alert('1. Função iniciou');
-  alert('2. Telefone: ' + telefone);
+  // 🔥 USA DIRETO, SEM LIMPAR!
+  const clientes = await fetchSupabase(`clientes?telefone=eq.${telefone}`);
   
-  try {
-    const telefoneLimpo = telefone.replace(/\D/g, '');
-    alert('3. Telefone limpo: ' + telefoneLimpo);
-    
-    alert('4. Buscando cliente...');
-    const clientes = await fetchSupabase(`clientes?telefone=eq.${telefoneLimpo}`);
-    alert('5. Clientes: ' + JSON.stringify(clientes));
-    
-    return true;
-  } catch (error) {
-    alert('6. ERRO: ' + error.message);
-    return true;
+  if (clientes.length === 0) return true;
+  
+  const agenda = await fetchSupabase(
+    `agenda?cliente_id=eq.${clientes[0].id}&data_agendamento=eq.${data}`
+  );
+  
+  if (agenda.length >= 5) {
+    mostrarMensagem('Limite de 5!', 'erro');
+    return false;
   }
+  
+  return true;
 }
+
  
 async function confirmarAgendamento() {
   const nome = document.getElementById('nomeCliente').value.trim();
@@ -1088,9 +1087,9 @@ async function confirmarAgendamento() {
       body: JSON.stringify(clienteData)
     });
     //limite agendamento
-/*const telefone = document.getElementById('telefoneCliente').value;
+const telefone = document.getElementById('telefoneCliente').value;
 const pode = await verificarLimiteDiario(telefone, dataSelecionada);
-if (!pode) return;*/
+if (!pode) return;
     
     const agendamentoData = {
       cliente_id: clienteId,
