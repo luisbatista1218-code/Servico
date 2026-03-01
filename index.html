@@ -1457,7 +1457,7 @@ function carregarTodosAgendamentos() {
           <div><strong>Telefone:</strong> <span>${cliente.telefone}</span></div>
           <div><strong>Data/Horário:</strong> <span>${dataFormatada} - ${ag.horario}</span></div>
           <div><strong>Serviço:</strong> <span>${servico.nome}</span></div>
-          <div><strong>Profissional:</strong> <span>${servico.profissional}</span></div>
+          <div><strong>Profissional:</strong> <span style="color: #3b82f6; font-weight: 600;">${servico.profissional}</span></div>
           <div><strong>Status:</strong> <span style="color: ${statusColor}; font-weight: 700;">${ag.status === 'concluido' ? '✅ CONCLUÍDO' : ag.status}</span></div>
           <div><strong>Código:</strong> <span style="color: #3b82f6; font-weight: 600;">${ag.codigo_confirmacao || ''}</span></div>
         </div>
