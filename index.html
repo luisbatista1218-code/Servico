@@ -1071,9 +1071,14 @@ async function enviarTelegram(mensagem) {
 }
  
 async function confirmarAgendamento() {
+   if (window.agendando) return;
+  window.agendando = true;
+  
+  const btn = document.querySelector('.btn-admin[onclick="confirmarAgendamento()"]');
+  if (btn) btn.disabled = true;
+  
   const nome = document.getElementById('nomeCliente').value.trim();
   const telefone = document.getElementById('telefoneCliente').value.trim();
-
   const pode = await verificarLimiteDiario(telefone, dataSelecionada);
 if (!pode) return;
 
