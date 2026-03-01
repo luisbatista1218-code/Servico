@@ -513,7 +513,7 @@ async function atualizarServico() {
   }
 }
 
-async function excluirServico() {
+/*async function excluirServico() {
   if (!servicoEditando) {
     mostrarMensagem('Selecione um serviço para excluir!', 'erro');
     return;
@@ -538,8 +538,20 @@ async function excluirServico() {
   } catch (error) {
     mostrarMensagem('Erro ao excluir serviço', 'erro');
   }
+}*/
+async function excluirServico() {
+  if (!servicoEditando) {
+    mostrarMensagem('Selecione um serviço para excluir!', 'erro');
+    return;
+  }
+  
+  // Mostra o nome do serviço no modal
+  document.getElementById('modalServicoNome').textContent = `"${servicoEditando.nome}"`;
+  
+  // Abre o modal
+  document.getElementById('modalExcluirServico').style.display = 'flex';
 }
-
+  
 async function salvarConfiguracao(tipo) {
   try {
     if (tipo === 'almoco') {
@@ -1579,7 +1591,8 @@ function mostrarMensagem(texto, tipo) {
 // ========== VARIÁVEIS E FUNÇÃO DO MODAL ==========
 let idParaExcluir = null;
 let origemParaExcluir = null;
-
+let servicoIdParaExcluir = null;
+  
 window.abrirModalExclusao = function(agendamentoId, origem) {
   idParaExcluir = agendamentoId;
   origemParaExcluir = origem;
@@ -1629,14 +1642,72 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   
   // CLICAR FORA FECHA
-  window.addEventListener('click', function(e) {
+  /*window.addEventListener('click', function(e) {
     const modal = document.getElementById('modalExcluir');
     if (e.target === modal) {
       modal.style.display = 'none';
       idParaExcluir = null;
     }
+  });*/
+// BOTÃO CONFIRMAR EXCLUSÃO DE SERVIÇO
+const btnConfirmarExclusaoServico = document.getElementById('btnConfirmarExclusaoServico');
+if (btnConfirmarExclusaoServico) {
+  btnConfirmarExclusaoServico.addEventListener('click', async function() {
+    if (servicoEditando) {
+      try {
+        await fetchSupabase(`servicos?id=eq.${servicoEditando.id}`, {
+          method: 'DELETE'
+        });
+        
+        mostrarMensagem('Serviço excluído!', 'sucesso');
+        await carregarServicos();
+        carregarServicosCliente();
+        carregarServicosAdmin();
+        
+        document.getElementById('editarServicoNome').value = '';
+        document.getElementById('editarServicoPreco').value = '';
+        servicoEditando = null;
+        
+      } catch (error) {
+        mostrarMensagem('Erro ao excluir serviço', 'erro');
+      }
+    }
+    
+    document.getElementById('modalExcluirServico').style.display = 'none';
   });
-// fim
+}
+
+// BOTÃO CANCELAR EXCLUSÃO DE SERVIÇO
+const btnCancelarExclusaoServico = document.getElementById('btnCancelarExclusaoServico');
+if (btnCancelarExclusaoServico) {
+  btnCancelarExclusaoServico.addEventListener('click', function() {
+    document.getElementById('modalExcluirServico').style.display = 'none';
+  });
+}
+
+// CLICAR FORA FECHA O MODAL DE SERVIÇO
+/*window.addEventListener('click', function(e) {
+  const modalServico = document.getElementById('modalExcluirServico');
+  if (e.target === modalServico) {
+    modalServico.style.display = 'none';
+  }
+});*/
+  // CLICAR FORA FECHA AMBOS OS MODAIS
+  window.addEventListener('click', function(e) {
+    // Modal de agendamento
+    const modalAgendamento = document.getElementById('modalExcluir');
+    if (e.target === modalAgendamento) {
+      modalAgendamento.style.display = 'none';
+      idParaExcluir = null;
+    }
+    // Modal de serviço
+    const modalServico = document.getElementById('modalExcluirServico');
+    if (e.target === modalServico) {
+      modalServico.style.display = 'none';
+      servicoIdParaExcluir = null;
+    }
+  });
+  // fim
 });
  
 </script>
@@ -1655,7 +1726,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     </div>
   </div>
 </div>
- 
+ <!-- MODAL DE EXCLUSÃO DE SERVIÇO -->
+<div id="modalExcluirServico" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 9999;">
+  <div style="background: white; border-radius: 20px; padding: 30px; max-width: 350px; text-align: center;">
+    <div style="font-size: 50px; margin-bottom: 20px;">🗑️</div>
+    <h3 style="margin-bottom: 15px;">Excluir serviço?</h3>
+    <p style="margin-bottom: 10px; color: #666;" id="modalServicoNome">Tem certeza?</p>
+    <p style="margin-bottom: 25px; color: #ef4444; font-size: 14px;">Essa ação é permanente.</p>
+    <div style="display: flex; gap: 10px;">
+      <button id="btnCancelarExclusaoServico" style="flex: 1; padding: 12px; background: #f1f1f1; border: none; border-radius: 10px; cursor: pointer;">Cancelar</button>
+      <button id="btnConfirmarExclusaoServico" style="flex: 1; padding: 12px; background: #ef4444; color: white; border: none; border-radius: 10px; cursor: pointer;">Excluir</button>
+    </div>
+  </div>
+</div>
   
 </body>
 </html>
